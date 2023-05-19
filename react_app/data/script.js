@@ -1,19 +1,68 @@
-const nav = document.querySelector('.navbar')
-fetch('/navbar.html')
-.then(res=>res.text())
-.then(data=>{
-    nav.innerHTML=data
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(data, 'text/html')
-    eval(doc.querySelector('script').textContent)
-})
+// Complete project details: https://randomnerdtutorials.com/esp32-web-server-websocket-sliders/
+/*
+var gateway = `ws://${window.location.hostname}/ws`;
+var websocket;
+window.addEventListener('load', onload);
 
-const footer = document.querySelector('.footer')
-fetch('/footer.html')
-.then(res=>res.text())
-.then(data=>{
-    footer.innerHTML=data
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(data, 'text/html')
-    eval(doc.querySelector('script').textContent)
-})
+function onload(event) {
+    initWebSocket();
+}
+
+function getValues(){
+    websocket.send("getValues");
+}
+
+function initWebSocket() {
+    console.log('Trying to open a WebSocket connection…');
+    websocket = new WebSocket(gateway);
+    websocket.onopen = onOpen;
+    websocket.onclose = onClose;
+    websocket.onmessage = onMessage;
+}
+
+function onOpen(event) {
+    console.log('Connection opened');
+    getValues();
+}
+
+function onClose(event) {
+    console.log('Connection closed');
+    setTimeout(initWebSocket, 2000);
+}
+
+function updateSliderPWM(element) {
+    var sliderNumber = element.id.charAt(element.id.length-1);
+    var sliderValue = document.getElementById(element.id).value;
+    document.getElementById("sliderValue"+sliderNumber).innerHTML = sliderValue;
+    console.log(sliderValue);
+    websocket.send(sliderNumber+"s"+sliderValue.toString());
+}
+
+function onMessage(event) {
+    console.log(event.data);
+    var myObj = JSON.parse(event.data);
+    var keys = Object.keys(myObj);
+
+    for (var i = 0; i < keys.length; i++){
+        var key = keys[i];
+        document.getElementById(key).innerHTML = myObj[key];
+        document.getElementById("slider"+ (i+1).toString()).value = myObj[key];
+    }
+}
+*/
+
+setInterval(function() {
+    // Call a function repetatively with 2 Second interval
+    getData();
+}, 2000); //2000mSeconds update rate
+
+function getData() {
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+        document.getElementById("TempValue").innerHTML = this.responseText;
+    }
+    };
+    xhttp.open("GET", "readTemp", true);
+    xhttp.send();
+}

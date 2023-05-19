@@ -20,7 +20,6 @@ const char* password = "12345678";
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
 
-/*
 // Create a WebSocket object
 AsyncWebSocket ws("/ws");
 
@@ -44,7 +43,7 @@ String getSliderValues(){
   String jsonString = JSON.stringify(sliderLimites);
   return jsonString;
 }
-*/
+
 // Initialize SPIFFS
 void initFS() {
   if (!SPIFFS.begin()) {
@@ -66,7 +65,7 @@ void initWiFi() {
   }
   Serial.println(WiFi.localIP());
 }
-/*
+
 void notifyClients(String sliderValues) {
   ws.textAll(sliderValues);
 }
@@ -116,7 +115,7 @@ void initWebSocket() {
   ws.onEvent(onEvent);
   server.addHandler(&ws);
 }
-*/
+
 
 void handleTemp(AsyncWebServerRequest *request) {
   float temp = dht.readTemperature();   // Lê a temperatura do sensor

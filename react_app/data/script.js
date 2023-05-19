@@ -1,5 +1,5 @@
 // Complete project details: https://randomnerdtutorials.com/esp32-web-server-websocket-sliders/
-/*
+
 var gateway = `ws://${window.location.hostname}/ws`;
 var websocket;
 window.addEventListener('load', onload);
@@ -49,7 +49,7 @@ function onMessage(event) {
         document.getElementById("slider"+ (i+1).toString()).value = myObj[key];
     }
 }
-*/
+
 
 setInterval(function() {
     // Call a function repetatively with 2 Second interval

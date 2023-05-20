@@ -1,56 +1,25 @@
-// Complete project details: https://randomnerdtutorials.com/esp32-web-server-websocket-sliders/
-/*
-var gateway = `ws://${window.location.hostname}/ws`;
-var websocket;
-window.addEventListener('load', onload);
+// To call the navbar and footer htmls into the index html
+const nav = document.querySelector('.navbar')
+fetch('/navbar.html')
+.then(res=>res.text())
+.then(data=>{
+    nav.innerHTML=data
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(data, 'text/html')
+    eval(doc.querySelector('script').textContent)
+})
 
-function onload(event) {
-    initWebSocket();
-}
+const footer = document.querySelector('.footer')
+fetch('/footer.html')
+.then(res=>res.text())
+.then(data=>{
+    footer.innerHTML=data
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(data, 'text/html')
+    eval(doc.querySelector('script').textContent)
+})
 
-function getValues(){
-    websocket.send("getValues");
-}
-
-function initWebSocket() {
-    console.log('Trying to open a WebSocket connection…');
-    websocket = new WebSocket(gateway);
-    websocket.onopen = onOpen;
-    websocket.onclose = onClose;
-    websocket.onmessage = onMessage;
-}
-
-function onOpen(event) {
-    console.log('Connection opened');
-    getValues();
-}
-
-function onClose(event) {
-    console.log('Connection closed');
-    setTimeout(initWebSocket, 2000);
-}
-
-function updateSliderPWM(element) {
-    var sliderNumber = element.id.charAt(element.id.length-1);
-    var sliderValue = document.getElementById(element.id).value;
-    document.getElementById("sliderValue"+sliderNumber).innerHTML = sliderValue;
-    console.log(sliderValue);
-    websocket.send(sliderNumber+"s"+sliderValue.toString());
-}
-
-function onMessage(event) {
-    console.log(event.data);
-    var myObj = JSON.parse(event.data);
-    var keys = Object.keys(myObj);
-
-    for (var i = 0; i < keys.length; i++){
-        var key = keys[i];
-        document.getElementById(key).innerHTML = myObj[key];
-        document.getElementById("slider"+ (i+1).toString()).value = myObj[key];
-    }
-}
-*/
-
+// ESP32 Update web page without refresh
 setInterval(function() {
     // Call a function repetatively with 2 Second interval
     getData();
@@ -63,6 +32,6 @@ function getData() {
         document.getElementById("TempValue").innerHTML = this.responseText;
     }
     };
-    xhttp.open("GET", "readTemp", true);
+    xhttp.open("GET", "/temp/getTemp", true);
     xhttp.send();
 }

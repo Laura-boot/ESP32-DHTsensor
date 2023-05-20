@@ -8,10 +8,20 @@
 #include <painlessMesh.h>
 #include <Arduino_JSON.h>
 
-
+// DHT config
 #define DHTPIN 19   // Define o pino do sensor DHT22
 #define DHTTYPE DHT11   // Define o tipo de sensor DHT
 DHT dht(DHTPIN, DHTTYPE);
+
+// LEDs config
+#define LEDtemp 15
+#define LEDhumi 18
+#define LEDok   23
+#define LEDhigh 22
+
+// lim config (by slider control)
+#define lim_temp 28
+#define lim_humi 60
 
 const char* ssid = "Lau";
 const char* password = "12345678";
@@ -20,31 +30,7 @@ const char* password = "12345678";
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
 
-/*
-// Create a WebSocket object
-AsyncWebSocket ws("/ws");
-
-String message = "";
-String limTemp = "0";
-String limHumi = "0";
-
-
-int limTemp_config;
-int limHumi_config;
-
-
-//Json Variable to Hold Slider Values
-JSONVar sliderLimites;
-
-//Get Slider Values
-String getSliderValues(){
-  sliderLimites["sliderLimTemp"] = String(limTemp);
-  //sliderLimites["sliderLimHumi"] = String(limHumi);
-
-  String jsonString = JSON.stringify(sliderLimites);
-  return jsonString;
-}
-*/
+/* -------------------------- procedimentos :3 --------------------------*/
 // Initialize SPIFFS
 void initFS() {
   if (!SPIFFS.begin()) {
@@ -66,87 +52,116 @@ void initWiFi() {
   }
   Serial.println(WiFi.localIP());
 }
-/*
-void notifyClients(String sliderValues) {
-  ws.textAll(sliderValues);
-}
-void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
-  AwsFrameInfo *info = (AwsFrameInfo*)arg;
-  if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-    data[len] = 0;
-    message = (char*)data;
-    if (message.indexOf("1s") >= 0) {
-      limTemp = message.substring(2);
-      limTemp_config = limTemp.toInt();
-      Serial.println(limTemp_config);
-      Serial.print(getSliderValues());
-      notifyClients(getSliderValues());
-    }
-    if (message.indexOf("2s") >= 0) {
-      limHumi = message.substring(2);
-      limHumi_config = limHumi.toInt();
-      Serial.println(limHumi_config);
-      Serial.print(getSliderValues());
-      notifyClients(getSliderValues());
-    }
-    if (strcmp((char*)data, "getValues") == 0) {
-      notifyClients(getSliderValues());
-    }
+
+void check_temp_humi(float unid, int lim){
+  if (isnan(unid)){ // FALHA NA LEITURA DE DADOS
+    Serial.print("falha ao ler dados do sensor DHT11");
+    return;
+  }
+  else if (unid <= lim){ // TEMP ou HUMI OK
+    digitalWrite(LEDok, HIGH);
+    digitalWrite(LEDhigh, LOW);
+  }
+  else{
+    digitalWrite(LEDok, LOW);
+    digitalWrite(LEDhigh, HIGH);
   }
 }
 
-void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
-  switch (type) {
-    case WS_EVT_CONNECT:
-      Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
-      break;
-    case WS_EVT_DISCONNECT:
-      Serial.printf("WebSocket client #%u disconnected\n", client->id());
-      break;
-    case WS_EVT_DATA:
-      handleWebSocketMessage(arg, data, len);
-      break;
-    case WS_EVT_PONG:
-    case WS_EVT_ERROR:
-      break;
-  }
+void getTempPage(AsyncWebServerRequest *request) {
+  float temp = dht.readTemperature();
+  check_temp_humi(temp, lim_temp);
+  digitalWrite(LEDtemp, HIGH);
+  digitalWrite(LEDhumi, LOW);
+  Serial.print("temp: ");
+  Serial.print(temp);
+  Serial.println("°C ");
+  request->send(SPIFFS, "/temp.html", "text/html");
 }
-
-void initWebSocket() {
-  ws.onEvent(onEvent);
-  server.addHandler(&ws);
-}
-*/
 
 void handleTemp(AsyncWebServerRequest *request) {
   float temp = dht.readTemperature();   // Lê a temperatura do sensor
   String TempValue = String(temp);
-  Serial.print("temp: ");
-  Serial.print(temp);
-  Serial.println("°C ");
   request->send(200, "text/plane", TempValue); //Send temp value only to client ajax request
 }
+
+
 
 void setup() {
   Serial.begin(115200);
   dht.begin();
+
+  pinMode(LEDtemp    , OUTPUT);
+  pinMode(LEDhumi    , OUTPUT);
+  pinMode(LEDok      , OUTPUT);
+  pinMode(LEDhigh    , OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LEDtemp    , LOW);
+  digitalWrite(LEDhumi    , LOW);
+  digitalWrite(LEDok      , LOW);
+  digitalWrite(LEDhumi    , LOW);
+  digitalWrite(LED_BUILTIN, LOW);
+
   initFS();
   initWiFi();
-  //initWebSocket();
-  
+
   // Web Server Root URL
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/index.html", "text/html");
+    digitalWrite(LEDtemp, LOW);
+    digitalWrite(LEDhumi, LOW);
+    digitalWrite(LEDok,   LOW);
+    digitalWrite(LEDhumi, LOW);
+  });
+
+  server.on("/index.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/index.html", "text/html");
+    digitalWrite(LEDtemp, LOW);
+    digitalWrite(LEDhumi, LOW);
+    digitalWrite(LEDok,   LOW);
+    digitalWrite(LEDhumi, LOW);
+  });
+
+  server.on("/help.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/help.html", "text/html");
+    digitalWrite(LEDtemp, LOW);
+    digitalWrite(LEDhumi, LOW);
+    digitalWrite(LEDok,   LOW);
+    digitalWrite(LEDhumi, LOW);
+  });
+
+  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/style.css", "text/css");});
+  
+  server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/script.js", "text/js");});
+
+  server.on("/navbar.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/navbar.html", "text/html");});
+  
+  server.on("/footer.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/footer.html", "text/html");});
+
+  /*
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/temp.html", "text/html");
   });
   
+  server.on("/temp", HTTP_GET, handleTemp);
+  ------
+
+  server.on("/temp.html", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(SPIFFS, "/temp.html", "text/html");
+  });
+  */
+  
+  server.on("/temp.html", HTTP_GET, getTempPage); //To get update of temp value only
+  server.on("/temp/getTemp", HTTP_GET, handleTemp);
+
+
   server.serveStatic("/", SPIFFS, "/");
-
-  // Start server
-  server.begin();
-
-  server.on("/readTemp", HTTP_GET, handleTemp);//To get update of temp value only
-
-  server.begin();
+  
+  server.begin(); //Start server
 }
 
 void loop() {

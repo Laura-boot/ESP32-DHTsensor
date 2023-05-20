@@ -70,7 +70,6 @@ void check_temp_humi(float unid, int lim){
 
 void getTempPage(AsyncWebServerRequest *request) {
   float temp = dht.readTemperature();
-  check_temp_humi(temp, lim_temp);
   digitalWrite(LEDtemp, HIGH);
   digitalWrite(LEDhumi, LOW);
   Serial.print("temp: ");
@@ -81,7 +80,6 @@ void getTempPage(AsyncWebServerRequest *request) {
 
 void getHumiPage(AsyncWebServerRequest *request) {
   float humi = dht.readHumidity();
-  check_temp_humi(humi, lim_humi);
   digitalWrite(LEDtemp, LOW);
   digitalWrite(LEDhumi, HIGH);
   Serial.print("humi: ");
@@ -92,12 +90,14 @@ void getHumiPage(AsyncWebServerRequest *request) {
 
 void handleTemp(AsyncWebServerRequest *request) {
   float temp = dht.readTemperature();   // Lê a temperatura do sensor
+  check_temp_humi(temp, lim_temp);
   String TempValue = String(temp);
   request->send(200, "text/plane", TempValue); //Send temp value only to client ajax request
 }
 
 void handleHumi(AsyncWebServerRequest *request) {
   float humi = dht.readHumidity();   // Lê a temperatura do sensor
+  check_temp_humi(humi, lim_humi);
   String HumiValue = String(humi);
   request->send(200, "text/plane", HumiValue); //Send temp value only to client ajax request
 }

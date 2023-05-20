@@ -79,13 +79,36 @@ void getTempPage(AsyncWebServerRequest *request) {
   request->send(SPIFFS, "/temp.html", "text/html");
 }
 
+void getHumiPage(AsyncWebServerRequest *request) {
+  float humi = dht.readHumidity();
+  check_temp_humi(humi, lim_humi);
+  digitalWrite(LEDtemp, LOW);
+  digitalWrite(LEDhumi, HIGH);
+  Serial.print("humi: ");
+  Serial.print(humi);
+  Serial.println("% ");
+  request->send(SPIFFS, "/humi.html", "text/html");
+}
+
 void handleTemp(AsyncWebServerRequest *request) {
   float temp = dht.readTemperature();   // Lê a temperatura do sensor
   String TempValue = String(temp);
   request->send(200, "text/plane", TempValue); //Send temp value only to client ajax request
 }
 
+void handleHumi(AsyncWebServerRequest *request) {
+  float humi = dht.readHumidity();   // Lê a temperatura do sensor
+  String HumiValue = String(humi);
+  request->send(200, "text/plane", HumiValue); //Send temp value only to client ajax request
+}
 
+void led_off(){
+  digitalWrite(LEDtemp    , LOW);
+  digitalWrite(LEDhumi    , LOW);
+  digitalWrite(LEDok      , LOW);
+  digitalWrite(LEDhumi    , LOW);
+  digitalWrite(LED_BUILTIN, LOW);
+}
 
 void setup() {
   Serial.begin(115200);
@@ -96,11 +119,7 @@ void setup() {
   pinMode(LEDok      , OUTPUT);
   pinMode(LEDhigh    , OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LEDtemp    , LOW);
-  digitalWrite(LEDhumi    , LOW);
-  digitalWrite(LEDok      , LOW);
-  digitalWrite(LEDhumi    , LOW);
-  digitalWrite(LED_BUILTIN, LOW);
+  led_off();
 
   initFS();
   initWiFi();
@@ -108,56 +127,24 @@ void setup() {
   // Web Server Root URL
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/index.html", "text/html");
-    digitalWrite(LEDtemp, LOW);
-    digitalWrite(LEDhumi, LOW);
-    digitalWrite(LEDok,   LOW);
-    digitalWrite(LEDhumi, LOW);
+    led_off();
   });
 
   server.on("/index.html", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/index.html", "text/html");
-    digitalWrite(LEDtemp, LOW);
-    digitalWrite(LEDhumi, LOW);
-    digitalWrite(LEDok,   LOW);
-    digitalWrite(LEDhumi, LOW);
+    led_off();
   });
 
   server.on("/help.html", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/help.html", "text/html");
-    digitalWrite(LEDtemp, LOW);
-    digitalWrite(LEDhumi, LOW);
-    digitalWrite(LEDok,   LOW);
-    digitalWrite(LEDhumi, LOW);
+    led_off();
   });
-
-  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/style.css", "text/css");});
-  
-  server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/script.js", "text/js");});
-
-  server.on("/navbar.html", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/navbar.html", "text/html");});
-  
-  server.on("/footer.html", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/footer.html", "text/html");});
-
-  /*
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/temp.html", "text/html");
-  });
-  
-  server.on("/temp", HTTP_GET, handleTemp);
-  ------
-
-  server.on("/temp.html", HTTP_GET, [](AsyncWebServerRequest *request){
-      request->send(SPIFFS, "/temp.html", "text/html");
-  });
-  */
   
   server.on("/temp.html", HTTP_GET, getTempPage); //To get update of temp value only
   server.on("/temp/getTemp", HTTP_GET, handleTemp);
 
+  server.on("/humi.html", HTTP_GET, getHumiPage); //To get update of humi value only
+  server.on("/humi/getHumi", HTTP_GET, handleHumi);
 
   server.serveStatic("/", SPIFFS, "/");
   

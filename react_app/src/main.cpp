@@ -50,6 +50,7 @@ void initWiFi() {
     Serial.print('.');
     delay(1000);
   }
+  Serial.println();
   Serial.println(WiFi.localIP());
 }
 
@@ -59,10 +60,12 @@ void check_temp_humi(float unid, int lim){
     return;
   }
   else if (unid <= lim){ // TEMP ou HUMI OK
+    Serial.println("testei a temperatura ou a humidade e deu BOM");
     digitalWrite(LEDok, HIGH);
     digitalWrite(LEDhigh, LOW);
   }
   else{
+    Serial.println("testei a temperatura ou a humidade e deu RUIM");
     digitalWrite(LEDok, LOW);
     digitalWrite(LEDhigh, HIGH);
   }
@@ -102,12 +105,11 @@ void handleHumi(AsyncWebServerRequest *request) {
   request->send(200, "text/plane", HumiValue); //Send temp value only to client ajax request
 }
 
-void led_off(){
+void leds_off(){
   digitalWrite(LEDtemp    , LOW);
   digitalWrite(LEDhumi    , LOW);
   digitalWrite(LEDok      , LOW);
-  digitalWrite(LEDhumi    , LOW);
-  digitalWrite(LED_BUILTIN, LOW);
+  digitalWrite(LEDhigh    , LOW);
 }
 
 void setup() {
@@ -119,25 +121,25 @@ void setup() {
   pinMode(LEDok      , OUTPUT);
   pinMode(LEDhigh    , OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
-  led_off();
+  leds_off();
 
   initFS();
   initWiFi();
 
   // Web Server Root URL
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    leds_off();
     request->send(SPIFFS, "/index.html", "text/html");
-    led_off();
   });
 
   server.on("/index.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    leds_off();
     request->send(SPIFFS, "/index.html", "text/html");
-    led_off();
   });
 
   server.on("/help.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    leds_off();
     request->send(SPIFFS, "/help.html", "text/html");
-    led_off();
   });
   
   server.on("/temp.html", HTTP_GET, getTempPage); //To get update of temp value only
@@ -152,4 +154,10 @@ void setup() {
 }
 
 void loop() {
+  if (WiFi.status() != WL_CONNECTED) {
+    digitalWrite(LED_BUILTIN, LOW);
+  }
+  else {
+    digitalWrite(LED_BUILTIN, HIGH);
+  }
 }

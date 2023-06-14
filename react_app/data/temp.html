@@ -25,7 +25,7 @@
         
     </nav>
     
-    <div class="text">
+    <div class="main-elements">
         <h1>Temperature updated without refresh</h1>
         <div class="card">
             <h2><p>Temp:<span id="TempValue">0</span>&#8451;</p></h2><br>
@@ -65,13 +65,17 @@
 
         // Real time temperature graph
 
+        var layout = {
+            title: 'Graph Title'
+        };
+
         Plotly.newPlot('graphTemp', [{
             y: [25],
             mode: 'lines+markers',
             marker: {color: 'gray', size:8},
             line: {width: 4},
             name: 'temp'
-        }]);
+        }], layout);
 
         // Plotly.add_hline(y=28);
         

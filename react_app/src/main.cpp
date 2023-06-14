@@ -41,9 +41,9 @@ void setup() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());   //You can get IP address assigned to ESP
 
-  server.listen(8003); //Servidor en puerto 8003
+  /*server.listen(5500); //Servidor en puerto 8003
   Serial.print("Servidor Activo?");
-  Serial.println(server.available());
+  Serial.println(server.available());*/
   
 }
 

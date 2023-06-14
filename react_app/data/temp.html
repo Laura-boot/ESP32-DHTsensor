@@ -44,6 +44,7 @@
 
     <script>
         // ESP32 Update web page without refresh
+        var cnt = 0;
         setInterval(function() {
             // Call a function repetatively with 2 Second interval
             getData("TempValue", "/temp/getTemp");
@@ -54,6 +55,8 @@
             xhttp.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
                     document.getElementById(valueID).innerHTML = this.responseText;
+                    value = parseFloat(this.responseText);
+                    updateGraph(value);
                 }
             };
             xhttp.open("GET", path, true);
@@ -62,31 +65,25 @@
 
         // Real time temperature graph
 
-        function rand() {
-            return Math.random();
-        }
-
-        Plotly.plot('graphTemp', [{
-            y: [1,2,3].map(rand),
-            mode: 'lines+markers', 
-            marker: {color: 'pink', size: 8},
-            line: {width: 4}
-        }, {
-            y: [1,2].map(rand),
+        Plotly.newPlot('graphTemp', [{
+            y: [0],
             mode: 'lines+markers',
             marker: {color: 'gray', size:8},
-            line: {width: 4}
+            line: {width: 4},
+            name: 'temp'
         }]);
 
-        var cnt = 0;
-        var interval = setInterval(function() {
-        Plotly.extendTraces('graphTemp', {
-            y: [[rand()], [rand()]]
-        }, [0, 1])
+        // Plotly.add_hline(y=28);
+        
+        function updateGraph(tempData) {
+            console.log(tempData);
+            Plotly.extendTraces('graphTemp', {
+                y: [[tempData]]
+            }, [0])
 
-        cnt = cnt+1;
-        if(cnt === 100) clearInterval(interval);
-        }, 500);
+            cnt = cnt+1;
+            if(cnt === 100) clearInterval(interval);
+        }
 
     </script>
 

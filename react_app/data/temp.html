@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://kit.fontawesome.com/57b929fbcb.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>  <!-- plotly -->
     <link rel="stylesheet" href="style.css">
     <title>Document</title>
 
@@ -29,6 +30,9 @@
         <div class="card">
             <h2><p>Temp:<span id="TempValue">0</span>&#8451;</p></h2><br>
         </div>
+
+        <div id="graphTemp"></div>
+
         <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Eligendi quas sed exercitationem ut repudiandae magnam tenetur doloremque ducimus modi sunt cupiditate eaque illo, mollitia maxime quaerat vel natus atque doloribus veniam reiciendis, id a ab! Ratione repellendus ut saepe fugit.</p>
     </section>
     
@@ -55,6 +59,34 @@
             xhttp.open("GET", path, true);
             xhttp.send();
         }
+    </script>
+
+    <script>
+        function rand() {
+            return Math.random();
+        }
+
+        Plotly.plot('graphTemp', [{
+            y: [1,2,3].map(rand),
+            mode: 'lines+markers', 
+            marker: {color: 'pink', size: 8},
+            line: {width: 4}
+        }, {
+            y: [1,2].map(rand),
+            mode: 'lines+markers',
+            marker: {color: 'gray', size:8},
+            line: {width: 4}
+        }]);
+
+        var cnt = 0;
+        var interval = setInterval(function() {
+        Plotly.extendTraces('graphTemp', {
+            y: [[rand()], [rand()]]
+        }, [0, 1])
+
+        cnt = cnt+1;
+        if(cnt === 100) clearInterval(interval);
+        }, 500);
     </script>
 
 </body>

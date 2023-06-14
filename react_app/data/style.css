@@ -123,8 +123,12 @@ h1{
     background: #fafafa;
 }
 
-.light .text {
+.light .body {
     color: black;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
 }
 
 .light .navbar .tools {
@@ -189,7 +193,7 @@ h1{
     background: black;
 }
 
-.dark .text {
+.dark .body {
     color: #fafafa;
 }
 

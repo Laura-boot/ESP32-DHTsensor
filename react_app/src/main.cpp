@@ -12,18 +12,29 @@
 #include <Arduino_JSON.h>
 #include <LiquidCrystal_I2C.h>
 #include "characters.h"
+#include "pitches.h"
+#define BUZZER_PIN 33  // ESP32 pin GIOP18 connected to piezo buzzer
+
 
 // Pino do botão de ligar/desligar web server
 int buttonWeb = 35;
 
 // Pino do botão de ligar/desligar alarm 
-int buttonAlarm = 34;
+int buttonMute = 34;
 
 // Variável para controlar o estado do web server
 bool webServerAtivo = false;
 
 // Variável para controlar o estado do alarm
 bool muteAtivo = false;
+
+int melody[] = {
+  NOTE_E6, NOTE_C6
+};
+
+int noteDurations[] = {
+  200, 200
+};
 
 // DHT config
 #define DHTPIN 19   // Define o pino do sensor DHT22
@@ -37,11 +48,12 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);  // set the LCD address to 0x27 for a 16 cha
 #define LEDtemp 15
 #define LEDhumi 18
 #define LEDok   23
-#define LEDhigh 4 //porta 4 ou 2
+#define LEDhigh 4
 
 // lim config (by slider control)
 #define lim_temp 28
 #define lim_humi 60
+
 const char* ssid = "Lau";
 const char* password = "12345678";
 
@@ -98,13 +110,6 @@ void on_off_webServer(bool estadoBotao){
   // Se o botão estiver pressionado e o web server estiver desligado,
   // liga o web server. Se o botão estiver pressionado e o web server
   // estiver ligado, desliga o web server.
-  /*lcd.init();       
-  // create a new characters
-  lcd.createChar(1, Check);
-  lcd.createChar(2, Speaker);
-  lcd.createChar(3, Sound);
-  lcd.createChar(4, Mute);
-  lcd.clear(); // Clears the LCD screen*/
 
   if (estadoBotao == HIGH) {
     if (!webServerAtivo) {
@@ -145,27 +150,21 @@ void on_off_webServer(bool estadoBotao){
   }
 }
 
-void on_off_mute(){
+void on_off_mute(bool estadoBotao){
   // Se o botão estiver pressionado e o 'mute' estiver desligado,
   // liga o 'mute'. Se o botão estiver pressionado e o 'mute'
   // estiver ligado, desliga o 'mute'. E atualiza o LDC.
-
-  lcd.backlight(); // Make sure backlight is on
-
-  int estadoBotao = digitalRead(buttonAlarm);
-  
+  //lcd.backlight(); // Make sure backlight is on
 
   if (estadoBotao == HIGH) {
     if (!muteAtivo) {
       muteAtivo = true;
-      //add função que silencia o alarme
       //atualiza o icone do lcd
       lcd.setCursor(1, 1);
       lcd.write(4);
       Serial.println("mute ligado");
     } else {
       muteAtivo = false;
-      //add função que desilencia o alarme
       //atualiza o icone do lcd
       lcd.setCursor(1, 1);
       lcd.write(3);
@@ -174,6 +173,17 @@ void on_off_mute(){
 
     // Aguarda um curto período para evitar múltiplas leituras rápidas
     delay(1000);
+  }
+}
+
+void alarm(const char* state){
+  if (!muteAtivo & state=="high"){
+    tone(BUZZER_PIN,melody[0]);
+    delay(noteDurations[0]);
+    tone(BUZZER_PIN,melody[1]);
+    delay(noteDurations[1]);
+  }else{
+    noTone(BUZZER_PIN);
   }
 }
 
@@ -192,9 +202,10 @@ void check_temp_humi(const char* name, float unid, int lim){
     lcd.setCursor(0, 1);
     lcd.write(2);
     lcd.setCursor(1, 1);
-    on_off_mute();       // sound state function
+    on_off_mute(digitalRead(buttonMute));   // sound state function
     lcd.setCursor(7, 1);
     lcd.print("ok");
+    alarm("ok");
   }
   else{
     //Serial.println("testei a temperatura ou a humidade e deu RUIM");
@@ -206,9 +217,10 @@ void check_temp_humi(const char* name, float unid, int lim){
     lcd.setCursor(0, 1);
     lcd.write(2);
     lcd.setCursor(1, 1);
-    on_off_mute();       // sound state function
+    on_off_mute(digitalRead(buttonMute));   // sound state function
     lcd.setCursor(6, 1);
     lcd.print("high");
+    alarm("high");
   }
 }
 
@@ -258,7 +270,7 @@ void setup(){
   leds_off();
 
   pinMode(buttonWeb, INPUT);
-  pinMode(buttonAlarm, INPUT);
+  pinMode(buttonMute, INPUT);
 
   dht.begin();
 
@@ -283,7 +295,7 @@ void setup(){
     lcd.print("HOME");
     lcd.setCursor(0, 1);
     lcd.write(2);
-    on_off_mute();       // sound state function
+    on_off_mute(digitalRead(buttonMute));     // sound state function
     request->send(SPIFFS, "/index.html", "text/html");
   });
 
@@ -295,7 +307,7 @@ void setup(){
     lcd.setCursor(0, 1);
     lcd.write(2);
     lcd.setCursor(1, 1);
-    on_off_mute();       // sound state function
+    on_off_mute(digitalRead(buttonMute));     // sound state function
     request->send(SPIFFS, "/index.html", "text/html");
   });
 
@@ -307,7 +319,7 @@ void setup(){
     lcd.setCursor(0, 1);
     lcd.write(2);
     lcd.setCursor(1, 1);
-    on_off_mute();       // sound state function
+    on_off_mute(digitalRead(buttonMute));     // sound state function
     request->send(SPIFFS, "/help.html", "text/html");
   });
 
@@ -329,7 +341,9 @@ void setup(){
 void loop() {
   // Verifica o estado do botão
   int estadoButtonWeb = digitalRead(buttonWeb);
+  int estadoButtonMute = digitalRead(buttonMute);
 
   // Liga ou desliga o Ponto de Acesso a depender do estado do botão
   on_off_webServer(estadoButtonWeb);
+  on_off_mute(estadoButtonMute);
 }

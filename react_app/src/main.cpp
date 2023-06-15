@@ -13,6 +13,18 @@
 #include <LiquidCrystal_I2C.h>
 #include "characters.h"
 
+// Pino do botão de ligar/desligar web server
+int buttonWeb = 35;
+
+// Pino do botão de ligar/desligar alarm 
+int buttonAlarm = 34;
+
+// Variável para controlar o estado do web server
+bool webServerAtivo = false;
+
+// Variável para controlar o estado do alarm
+bool alarmAtivo = false;
+
 // DHT config
 #define DHTPIN 19   // Define o pino do sensor DHT22
 #define DHTTYPE DHT11   // Define o tipo de sensor DHT
@@ -25,7 +37,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);  // set the LCD address to 0x3F for a 16 cha
 #define LEDtemp 15
 #define LEDhumi 18
 #define LEDok   23
-#define LEDhigh 122
+#define LEDhigh 4
 
 // lim config (by slider control)
 #define lim_temp 28
@@ -60,6 +72,48 @@ void initWiFi() {
   }
   Serial.println();
   Serial.println(WiFi.localIP());
+}
+
+void on_off_webServer(bool estadoBotao){
+  // Se o botão estiver pressionado e o web server estiver desligado,
+  // liga o web server. Se o botão estiver pressionado e o web server
+  // estiver ligado, desliga o web server.
+
+  if (estadoBotao == HIGH) {
+    if (!webServerAtivo) {
+      webServerAtivo = true;
+      Serial.println("Web server ligado");
+      digitalWrite(LED_BUILTIN, HIGH);
+    } else {
+      webServerAtivo = false;
+      Serial.println("");
+      Serial.println("Web server desligado");
+      digitalWrite(LED_BUILTIN, LOW);
+    }
+
+    // Aguarda um curto período para evitar múltiplas leituras rápidas
+    delay(1000);
+  }
+}
+
+void on_off_alarm(bool estadoBotao){
+  // Se o botão estiver pressionado e o alarm estiver desligado,
+  // liga o alarm. Se o botão estiver pressionado e o alarm
+  // estiver ligado, desliga o alarm.
+
+  if (estadoBotao == HIGH) {
+    if (!alarmAtivo) {
+      alarmAtivo = true;
+      Serial.println("alarm ligado");
+    } else {
+      alarmAtivo = false;
+      Serial.println("");
+      Serial.println("alarm desligado");
+    }
+
+    // Aguarda um curto período para evitar múltiplas leituras rápidas
+    delay(1000);
+  }
 }
 
 void check_temp_humi(float unid, int lim){

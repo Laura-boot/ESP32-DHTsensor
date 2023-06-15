@@ -89,7 +89,7 @@ void check_temp_humi(const char* name, float unid, int lim){
     lcd.setCursor(0, 1);
     lcd.write(2);
     lcd.setCursor(1, 1);
-    lcd.write(3);
+    lcd.write(3); // add sound state function
     lcd.setCursor(7, 1);
     lcd.print("ok");
   }
@@ -103,7 +103,7 @@ void check_temp_humi(const char* name, float unid, int lim){
     lcd.setCursor(0, 1);
     lcd.write(2);
     lcd.setCursor(1, 1);
-    lcd.write(4);
+    lcd.write(4); // add sound state function
     lcd.setCursor(6, 1);
     lcd.print("high");
   }
@@ -181,6 +181,7 @@ void setup(){
 
   initFS();
   initWiFi();
+  digitalWrite(LED_BUILTIN, HIGH);
   lcd.setCursor(1, 0);
   lcd.print("Connected to ");
   lcd.setCursor(5, 1);
@@ -196,6 +197,9 @@ void setup(){
     lcd.clear();
     lcd.setCursor(6, 0);
     lcd.print("HOME");
+    lcd.setCursor(0, 1);
+    lcd.write(2);
+    // add sound status function
     request->send(SPIFFS, "/index.html", "text/html");
   });
 
@@ -204,6 +208,9 @@ void setup(){
     lcd.clear();
     lcd.setCursor(6, 0);
     lcd.print("HOME");
+    lcd.setCursor(0, 1);
+    lcd.write(2);
+    // add sound status function
     request->send(SPIFFS, "/index.html", "text/html");
   });
 
@@ -212,6 +219,9 @@ void setup(){
     lcd.clear();
     lcd.setCursor(6, 0);
     lcd.print("HELP");
+    lcd.setCursor(0, 1);
+    lcd.write(2);
+    // add sound state function
     request->send(SPIFFS, "/help.html", "text/html");
   });
   

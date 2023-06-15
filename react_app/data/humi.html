@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://kit.fontawesome.com/57b929fbcb.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>  <!-- plotly -->
     <link rel="stylesheet" href="style.css">
     <title>Document</title>
 
@@ -24,13 +25,27 @@
         
     </nav>
 
-    <section class="text">
-        <h1>Humi</h1>
-        <div class="card">
-            <h2><p>Humi:<span id="HumiValue">0</span>&percnt;</p></h2><br>
+    <div class="main-elements">
+        <h1>Humi updated without refresh</h1>
+
+        <div class="text">
+            <p> Abaixo, é possível acompanhar a temperatura atualizada:</p>
         </div>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Eligendi quas sed exercitationem ut repudiandae magnam tenetur doloremque ducimus modi sunt cupiditate eaque illo, mollitia maxime quaerat vel natus atque doloribus veniam reiciendis, id a ab! Ratione repellendus ut saepe fugit.</p>
-    </section>
+
+        <div class="card">
+            <h2><p><span id="HumiValue">0</span>&percnt;</p></h2><br>
+        </div>
+
+        <div class="text">
+            <p> Abaixo, pode-se acompanhar o comportamento da humidade pelo tempo:</p>
+        </div>
+
+        <div id="graphHumi"></div>
+
+        <div class="text">
+            <p> Note que não é necessário recarregar a página.</p>
+        </div>
+    </div>
     
     <footer class="footer">
         
@@ -50,10 +65,38 @@
             xhttp.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
                     document.getElementById(valueID).innerHTML = this.responseText;
+                    value = parseFloat(this.responseText);
+                    updateGraph(value);
                 }
             };
             xhttp.open("GET", path, true);
             xhttp.send();
+        }
+
+        // Real time temperature graph
+
+        var layout = {
+            title: 'Humidade (%) X Tempo (s)'
+        };
+
+        Plotly.newPlot('graphHumi', [{
+            y: [40],
+            mode: 'lines+markers',
+            marker: {color: 'gray', size:8},
+            line: {width: 4},
+            name: 'humi'
+        }], layout);
+
+        // Plotly.add_hline(y=28);
+        
+        function updateGraph(humiData) {
+            console.log(humiData);
+            Plotly.extendTraces('graphHumi', {
+                y: [[humiData]]
+            }, [0])
+
+            cnt = cnt+1;
+            if(cnt === 100) clearInterval(interval);
         }
     </script>
     

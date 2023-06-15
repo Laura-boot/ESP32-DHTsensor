@@ -310,6 +310,10 @@ void setup(){
     on_off_mute();       // sound state function
     request->send(SPIFFS, "/help.html", "text/html");
   });
+
+  server.on("/test.html", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/test.html", "text/html");
+  });
   
   server.on("/temp.html", HTTP_GET, getTempPage); //To get update of temp value only
   server.on("/temp/getTemp", HTTP_GET, handleTemp);

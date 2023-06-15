@@ -1,0 +1,27 @@
+<html>
+<head>
+  <!-- Plotly.js -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>  <!-- plotly -->
+</head>
+<body>
+    <!-- Plotly chart will be drawn inside this DIV -->
+    <div id="graphDiv"></div>
+    <script>
+        var trace1 = {
+            x: [1, 2, 3, 4],
+            y: [4, 6, 3, 5],
+            type: 'scatter'
+        };
+
+        var data = [trace1];
+
+        var layout = {
+            title: 'Graph Title'
+        };
+
+        Plotly.newPlot(graphDiv, data, layout);
+
+        Plotly.addTraces(graphDiv, {x: [1, 2, 3, 4],y: [12, 3, 14, 4]});
+    </script>
+</body>
+</html>

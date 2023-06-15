@@ -27,13 +27,24 @@
     
     <div class="main-elements">
         <h1>Temperature updated without refresh</h1>
+
+        <div class="text">
+            <p> Abaixo, é possível acompanhar a temperatura atualizada:</p>
+        </div>
+
         <div class="card">
-            <h2><p>Temp:<span id="TempValue">0</span>&#8451;</p></h2><br>
+            <h2><p><span id="TempValue">0</span>&#8451;</p></h2><br>
+        </div>
+
+        <div class="text">
+            <p> Abaixo, pode-se acompanhar o comportamento da temperatura pelo tempo:</p>
         </div>
 
         <div id="graphTemp"></div>
 
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Eligendi quas sed exercitationem ut repudiandae magnam tenetur doloremque ducimus modi sunt cupiditate eaque illo, mollitia maxime quaerat vel natus atque doloribus veniam reiciendis, id a ab! Ratione repellendus ut saepe fugit.</p>
+        <div class="text">
+            <p> Note que não é necessário recarregar a página.</p>
+        </div>
     </div>
     
     <footer class="footer">
@@ -66,7 +77,7 @@
         // Real time temperature graph
 
         var layout = {
-            title: 'Graph Title'
+            title: 'Temperature (°C) X Tempo (s)'
         };
 
         Plotly.newPlot('graphTemp', [{

@@ -31,21 +31,19 @@ bool alarmAtivo = false;
 DHT dht(DHTPIN, DHTTYPE);
 
 // LCD
-LiquidCrystal_I2C lcd(0x27, 16, 2);  // set the LCD address to 0x3F for a 16 chars and 2 line display
+LiquidCrystal_I2C lcd(0x27, 16, 2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 // LEDs config
 #define LEDtemp 15
 #define LEDhumi 18
 #define LEDok   23
-#define LEDhigh 4
+#define LEDhigh 4 //porta 4 ou 2
 
 // lim config (by slider control)
 #define lim_temp 28
 #define lim_humi 60
-
 const char* ssid = "Lau";
 const char* password = "12345678";
-
 
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
@@ -68,7 +66,21 @@ void initWiFi() {
   Serial.print("Connecting to WiFi ..");
   while (WiFi.status() != WL_CONNECTED) {
     Serial.print('.');
+
+    lcd.setCursor(1, 0);
+    lcd.print("Connecting to ");
+    lcd.setCursor(4, 1);
+    lcd.print("WiFi");
+    lcd.setCursor(9, 1);
+    lcd.print(".");
     delay(1000);
+    lcd.setCursor(10, 1);
+    lcd.print(".");
+    delay(1000);
+    lcd.setCursor(11, 1);
+    lcd.print(".");
+    delay(1000);
+    lcd.clear();
   }
   Serial.println();
   Serial.println(WiFi.localIP());
@@ -81,14 +93,38 @@ void on_off_webServer(bool estadoBotao){
 
   if (estadoBotao == HIGH) {
     if (!webServerAtivo) {
+      lcd.init();       
+      lcd.backlight(); // Make sure backlight is on
+      // create a new characters
+      lcd.createChar(1, Check);
+      lcd.createChar(2, Speaker);
+      lcd.createChar(3, Sound);
+      lcd.createChar(4, Mute);
+      lcd.clear(); // Clears the LCD screen
+
+      // Print a initial message to the lcd.
+      lcd.setCursor(2, 0);
+      lcd.print("BEM VINDO(A)");
+      lcd.setCursor(7, 1);
+      lcd.print(":)");
+      delay(3000);
+      lcd.clear();
+      initWiFi();
+      lcd.setCursor(1, 0);
+      lcd.print("Connected to ");
+      lcd.setCursor(5, 1);
+      lcd.print("WiFi");
+      lcd.setCursor(10, 1);
+      lcd.write(1);
+      delay(3000);
+      lcd.clear();
       webServerAtivo = true;
-      Serial.println("Web server ligado");
       digitalWrite(LED_BUILTIN, HIGH);
     } else {
+      lcd.clear();
       webServerAtivo = false;
-      Serial.println("");
-      Serial.println("Web server desligado");
       digitalWrite(LED_BUILTIN, LOW);
+      leds_off();
     }
 
     // Aguarda um curto período para evitar múltiplas leituras rápidas
@@ -116,7 +152,7 @@ void on_off_alarm(bool estadoBotao){
   }
 }
 
-void check_temp_humi(float unid, int lim){
+void check_temp_humi(const char* name, float unid, int lim){
   if (isnan(unid)){ // FALHA NA LEITURA DE DADOS
     Serial.print("falha ao ler dados do sensor DHT11");
     return;
@@ -125,11 +161,29 @@ void check_temp_humi(float unid, int lim){
     Serial.println("testei a temperatura ou a humidade e deu BOM");
     digitalWrite(LEDok, HIGH);
     digitalWrite(LEDhigh, LOW);
+    lcd.clear();
+    lcd.setCursor(6, 0);
+    lcd.print(name);
+    lcd.setCursor(0, 1);
+    lcd.write(2);
+    lcd.setCursor(1, 1);
+    lcd.write(3); // add sound state function
+    lcd.setCursor(7, 1);
+    lcd.print("ok");
   }
   else{
     Serial.println("testei a temperatura ou a humidade e deu RUIM");
     digitalWrite(LEDok, LOW);
     digitalWrite(LEDhigh, HIGH);
+    lcd.clear();
+    lcd.setCursor(6, 0);
+    lcd.print(name);
+    lcd.setCursor(0, 1);
+    lcd.write(2);
+    lcd.setCursor(1, 1);
+    lcd.write(4); // add sound state function
+    lcd.setCursor(6, 1);
+    lcd.print("high");
   }
 }
 
@@ -155,14 +209,14 @@ void getHumiPage(AsyncWebServerRequest *request) {
 
 void handleTemp(AsyncWebServerRequest *request) {
   float temp = dht.readTemperature();   // Lê a temperatura do sensor
-  check_temp_humi(temp, lim_temp);
+  check_temp_humi("TEMP",temp, lim_temp);
   String TempValue = String(temp);
   request->send(200, "text/plane", TempValue); //Send temp value only to client ajax request
 }
 
 void handleHumi(AsyncWebServerRequest *request) {
   float humi = dht.readHumidity();   // Lê a temperatura do sensor
-  check_temp_humi(humi, lim_humi);
+  check_temp_humi("HUMI",humi, lim_humi);
   String HumiValue = String(humi);
   request->send(200, "text/plane", HumiValue); //Send temp value only to client ajax request
 }
@@ -174,9 +228,9 @@ void leds_off(){
   digitalWrite(LEDhigh    , LOW);
 }
 
-void setup() {
+
+void setup(){
   Serial.begin(115200);
-  dht.begin();
 
   pinMode(LEDtemp    , OUTPUT);
   pinMode(LEDhumi    , OUTPUT);
@@ -185,22 +239,47 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   leds_off();
 
+  pinMode(buttonWeb, INPUT);
+  pinMode(buttonAlarm, INPUT);
+
+  dht.begin();
+
   initFS();
-  initWiFi();
+  on_off_webServer(digitalRead(buttonWeb));
+  //initWiFi();
+  // digitalWrite(LED_BUILTIN, HIGH);
 
   // Web Server Root URL
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     leds_off();
+    lcd.clear();
+    lcd.setCursor(6, 0);
+    lcd.print("HOME");
+    lcd.setCursor(0, 1);
+    lcd.write(2);
+    // add sound status function
     request->send(SPIFFS, "/index.html", "text/html");
   });
 
   server.on("/index.html", HTTP_GET, [](AsyncWebServerRequest *request){
     leds_off();
+    lcd.clear();
+    lcd.setCursor(6, 0);
+    lcd.print("HOME");
+    lcd.setCursor(0, 1);
+    lcd.write(2);
+    // add sound status function
     request->send(SPIFFS, "/index.html", "text/html");
   });
 
   server.on("/help.html", HTTP_GET, [](AsyncWebServerRequest *request){
     leds_off();
+    lcd.clear();
+    lcd.setCursor(6, 0);
+    lcd.print("HELP");
+    lcd.setCursor(0, 1);
+    lcd.write(2);
+    // add sound state function
     request->send(SPIFFS, "/help.html", "text/html");
   });
   
@@ -213,14 +292,13 @@ void setup() {
   server.serveStatic("/", SPIFFS, "/");
   
   server.begin(); //Start server
-  
 }
 
 void loop() {
-  if (WiFi.status() != WL_CONNECTED) {
-    digitalWrite(LED_BUILTIN, LOW);
-  }
-  else {
-    digitalWrite(LED_BUILTIN, HIGH);
-  }
+  // Verifica os estados dos botões
+  int estadoButtonWeb = digitalRead(buttonWeb);
+  int estadoButtonAlarm = digitalRead(buttonAlarm);
+  // Liga ou desliga o Ponto de Acesso a depender do estado do botão
+  on_off_webServer(estadoButtonWeb);
+  on_off_alarm(estadoButtonAlarm);
 }

@@ -5,29 +5,40 @@
  *
  * For more detail (instruction and wiring diagram), visit https://esp32io.com/tutorials/esp32-piezo-buzzer
  */
+#include <Wire.h>
+#include <Arduino.h>
+#include "FS.h"
+#include <WiFi.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include <SPIFFS.h>
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
+#include <DHT_U.h>
+#include <painlessMesh.h>
+#include <Arduino_JSON.h>
+//#include <LiquidCrystal_I2C.h>
+//#include "characters.h"
 
 #include "pitches.h"
 #include "Arduino.h"
-#define BUZZZER_PIN  18 // ESP32 pin GIOP18 connected to piezo buzzer
+#define BUZZER_PIN 33  // ESP32 pin GIOP18 connected to piezo buzzer
 
 int melody[] = {
-  NOTE_C4, NOTE_G3, NOTE_G3, NOTE_A3, NOTE_G3, 0, NOTE_B3, NOTE_C4
+  NOTE_E6, NOTE_C6
 };
 
 int noteDurations[] = {
-  4, 8, 8, 4, 4, 4, 4, 4
+  150, 150
 };
 
 void setup() {
-  for (int thisNote = 0; thisNote < 8; thisNote++) {
-    int noteDuration = 1000 / noteDurations[thisNote];
-    tone(BUZZZER_PIN, melody[thisNote], noteDuration);
-
-    int pauseBetweenNotes = noteDuration * 1.30;
-    delay(pauseBetweenNotes);
-    noTone(BUZZZER_PIN);
-  }
+  pinMode(BUZZER_PIN, OUTPUT);
 }
 
 void loop() {
+  tone(BUZZER_PIN, melody[0]);
+  delay(200);
+  tone(BUZZER_PIN, melody[1]);
+  delay(200);
 }

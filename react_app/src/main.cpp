@@ -23,7 +23,7 @@ int buttonAlarm = 34;
 bool webServerAtivo = false;
 
 // Variável para controlar o estado do alarm
-bool alarmAtivo = false;
+bool muteAtivo = false;
 
 // DHT config
 #define DHTPIN 19   // Define o pino do sensor DHT22
@@ -49,6 +49,14 @@ const char* password = "12345678";
 AsyncWebServer server(80);
 
 /* -------------------------- procedimentos :3 --------------------------*/
+// apaga tudo
+void leds_off(){
+  digitalWrite(LEDtemp    , LOW);
+  digitalWrite(LEDhumi    , LOW);
+  digitalWrite(LEDok      , LOW);
+  digitalWrite(LEDhigh    , LOW);
+}
+
 // Initialize SPIFFS
 void initFS() {
   if (!SPIFFS.begin()) {
@@ -90,18 +98,17 @@ void on_off_webServer(bool estadoBotao){
   // Se o botão estiver pressionado e o web server estiver desligado,
   // liga o web server. Se o botão estiver pressionado e o web server
   // estiver ligado, desliga o web server.
+  /*lcd.init();       
+  // create a new characters
+  lcd.createChar(1, Check);
+  lcd.createChar(2, Speaker);
+  lcd.createChar(3, Sound);
+  lcd.createChar(4, Mute);
+  lcd.clear(); // Clears the LCD screen*/
 
   if (estadoBotao == HIGH) {
     if (!webServerAtivo) {
-      lcd.init();       
       lcd.backlight(); // Make sure backlight is on
-      // create a new characters
-      lcd.createChar(1, Check);
-      lcd.createChar(2, Speaker);
-      lcd.createChar(3, Sound);
-      lcd.createChar(4, Mute);
-      lcd.clear(); // Clears the LCD screen
-
       // Print a initial message to the lcd.
       lcd.setCursor(2, 0);
       lcd.print("BEM VINDO(A)");
@@ -109,6 +116,7 @@ void on_off_webServer(bool estadoBotao){
       lcd.print(":)");
       delay(3000);
       lcd.clear();
+      initFS();
       initWiFi();
       lcd.setCursor(1, 0);
       lcd.print("Connected to ");
@@ -118,10 +126,15 @@ void on_off_webServer(bool estadoBotao){
       lcd.write(1);
       delay(3000);
       lcd.clear();
+      lcd.setCursor(7, 0);
+      lcd.print("IP");
+      lcd.setCursor(3, 1);
+      lcd.print(WiFi.localIP());
       webServerAtivo = true;
       digitalWrite(LED_BUILTIN, HIGH);
     } else {
       lcd.clear();
+      lcd.noBacklight(); // Make sure backlight is off
       webServerAtivo = false;
       digitalWrite(LED_BUILTIN, LOW);
       leds_off();
@@ -132,19 +145,31 @@ void on_off_webServer(bool estadoBotao){
   }
 }
 
-void on_off_alarm(bool estadoBotao){
-  // Se o botão estiver pressionado e o alarm estiver desligado,
-  // liga o alarm. Se o botão estiver pressionado e o alarm
-  // estiver ligado, desliga o alarm.
+void on_off_mute(){
+  // Se o botão estiver pressionado e o 'mute' estiver desligado,
+  // liga o 'mute'. Se o botão estiver pressionado e o 'mute'
+  // estiver ligado, desliga o 'mute'. E atualiza o LDC.
+
+  lcd.backlight(); // Make sure backlight is on
+
+  int estadoBotao = digitalRead(buttonAlarm);
+  
 
   if (estadoBotao == HIGH) {
-    if (!alarmAtivo) {
-      alarmAtivo = true;
-      Serial.println("alarm ligado");
+    if (!muteAtivo) {
+      muteAtivo = true;
+      //add função que silencia o alarme
+      //atualiza o icone do lcd
+      lcd.setCursor(1, 1);
+      lcd.write(4);
+      Serial.println("mute ligado");
     } else {
-      alarmAtivo = false;
-      Serial.println("");
-      Serial.println("alarm desligado");
+      muteAtivo = false;
+      //add função que desilencia o alarme
+      //atualiza o icone do lcd
+      lcd.setCursor(1, 1);
+      lcd.write(3);
+      Serial.println("mute desligado");
     }
 
     // Aguarda um curto período para evitar múltiplas leituras rápidas
@@ -154,11 +179,11 @@ void on_off_alarm(bool estadoBotao){
 
 void check_temp_humi(const char* name, float unid, int lim){
   if (isnan(unid)){ // FALHA NA LEITURA DE DADOS
-    Serial.print("falha ao ler dados do sensor DHT11");
+    Serial.println("falha ao ler dados do sensor DHT11");
     return;
   }
   else if (unid <= lim){ // TEMP ou HUMI OK
-    Serial.println("testei a temperatura ou a humidade e deu BOM");
+    //Serial.println("testei a temperatura ou a humidade e deu BOM");
     digitalWrite(LEDok, HIGH);
     digitalWrite(LEDhigh, LOW);
     lcd.clear();
@@ -167,12 +192,12 @@ void check_temp_humi(const char* name, float unid, int lim){
     lcd.setCursor(0, 1);
     lcd.write(2);
     lcd.setCursor(1, 1);
-    lcd.write(3); // add sound state function
+    on_off_mute();       // sound state function
     lcd.setCursor(7, 1);
     lcd.print("ok");
   }
   else{
-    Serial.println("testei a temperatura ou a humidade e deu RUIM");
+    //Serial.println("testei a temperatura ou a humidade e deu RUIM");
     digitalWrite(LEDok, LOW);
     digitalWrite(LEDhigh, HIGH);
     lcd.clear();
@@ -181,7 +206,7 @@ void check_temp_humi(const char* name, float unid, int lim){
     lcd.setCursor(0, 1);
     lcd.write(2);
     lcd.setCursor(1, 1);
-    lcd.write(4); // add sound state function
+    on_off_mute();       // sound state function
     lcd.setCursor(6, 1);
     lcd.print("high");
   }
@@ -221,13 +246,6 @@ void handleHumi(AsyncWebServerRequest *request) {
   request->send(200, "text/plane", HumiValue); //Send temp value only to client ajax request
 }
 
-void leds_off(){
-  digitalWrite(LEDtemp    , LOW);
-  digitalWrite(LEDhumi    , LOW);
-  digitalWrite(LEDok      , LOW);
-  digitalWrite(LEDhigh    , LOW);
-}
-
 
 void setup(){
   Serial.begin(115200);
@@ -244,7 +262,15 @@ void setup(){
 
   dht.begin();
 
-  initFS();
+  lcd.init();       
+  // create a new characters
+  lcd.createChar(1, Check);
+  lcd.createChar(2, Speaker);
+  lcd.createChar(3, Sound);
+  lcd.createChar(4, Mute);
+  lcd.clear(); // Clears the LCD screen
+
+  //initFS();
   on_off_webServer(digitalRead(buttonWeb));
   //initWiFi();
   // digitalWrite(LED_BUILTIN, HIGH);
@@ -257,7 +283,7 @@ void setup(){
     lcd.print("HOME");
     lcd.setCursor(0, 1);
     lcd.write(2);
-    // add sound status function
+    on_off_mute();       // sound state function
     request->send(SPIFFS, "/index.html", "text/html");
   });
 
@@ -268,7 +294,8 @@ void setup(){
     lcd.print("HOME");
     lcd.setCursor(0, 1);
     lcd.write(2);
-    // add sound status function
+    lcd.setCursor(1, 1);
+    on_off_mute();       // sound state function
     request->send(SPIFFS, "/index.html", "text/html");
   });
 
@@ -279,7 +306,8 @@ void setup(){
     lcd.print("HELP");
     lcd.setCursor(0, 1);
     lcd.write(2);
-    // add sound state function
+    lcd.setCursor(1, 1);
+    on_off_mute();       // sound state function
     request->send(SPIFFS, "/help.html", "text/html");
   });
   
@@ -295,10 +323,9 @@ void setup(){
 }
 
 void loop() {
-  // Verifica os estados dos botões
+  // Verifica o estado do botão
   int estadoButtonWeb = digitalRead(buttonWeb);
-  int estadoButtonAlarm = digitalRead(buttonAlarm);
+
   // Liga ou desliga o Ponto de Acesso a depender do estado do botão
   on_off_webServer(estadoButtonWeb);
-  on_off_alarm(estadoButtonAlarm);
 }
